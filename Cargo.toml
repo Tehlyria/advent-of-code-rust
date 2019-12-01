@@ -1,0 +1,8 @@
+[package]
+name = "advent-of-code-rust"
+version = "0.1.0"
+edition = "2018"
+
+[[bin]]
+name = "day01"
+src = "src/day01/main.rs"
