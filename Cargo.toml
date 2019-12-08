@@ -3,6 +3,9 @@ name = "advent-of-code-rust"
 version = "0.1.0"
 edition = "2018"
 
+[dependencies]
+permutohedron = "0.2.4"
+
 [[bin]]
 name = "day01"
 src = "src/day01/main.rs"
