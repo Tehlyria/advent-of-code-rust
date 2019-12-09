@@ -1,27 +1,13 @@
 [package]
-name = "advent-of-code-rust"
+name = "aoc_2019"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+aoc-runner = "^0.2"
+aoc-runner-derive = "^0.2"
 permutohedron = "0.2.4"
 
 [[bin]]
-name = "day01"
-src = "src/day01/main.rs"
-
-[[bin]]
-name = "day02"
-src = "src/day02/main.rs"
-
-[[bin]]
-name = "day03"
-src = "src/day03/main.rs"
-
-[[bin]]
-name = "day04"
-src = "src/day04/main.rs"
-
-[[bin]]
-name = "day05"
-src = "src/day05/main.rs"
+name = "aoc"
+path = "src/main.rs"
