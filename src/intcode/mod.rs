@@ -1,5 +1,8 @@
+use std::ops::Div;
+
 pub struct IntCode {
-    vpc: i64,
+    vpc: usize,
+    rel_base: i64,
     mem: Vec<i64>,
 }
 
@@ -7,6 +10,7 @@ pub struct IntCode {
 enum ParameterMode {
     Position,
     Immediate,
+    Relative,
 }
 
 pub enum State {
@@ -21,14 +25,18 @@ const READ: i64 = 3;
 const WRITE: i64 = 4;
 const JT: i64 = 5;
 const JF: i64 = 6;
-const JLT: i64 = 7;
-const JE: i64 = 8;
+const LT: i64 = 7;
+const EQ: i64 = 8;
+const RB: i64 = 9;
 const HALT: i64 = 99;
 
 impl IntCode {
-    pub fn new(init_mem: Vec<i64>) -> Self {
+    pub fn new(mut init_mem: Vec<i64>) -> Self {
+        init_mem.resize(0x500, 0);
+
         Self {
             vpc: 0,
+            rel_base: 0,
             mem: init_mem,
         }
     }
@@ -47,115 +55,103 @@ impl IntCode {
 
     pub fn run(&mut self) -> State {
         loop {
-            let cur_opcode = self.mem[self.vpc as usize];
-            match cur_opcode % 100 {
-                ADD => self.do_add(cur_opcode),
-                MUL => self.do_mul(cur_opcode),
+            let opc = self.mem[self.vpc];
+            // A mod B = A - [A/B] * B
+            let cur_opcode = opc - opc.div(100) * 100;
+
+            match cur_opcode {
+                ADD => self.do_arith(|lhs, rhs| lhs + rhs),
+                MUL => self.do_arith(|lhs, rhs| lhs * rhs),
                 READ => return State::Waiting,
-                WRITE => {
-                    let val = self.write(cur_opcode);
-                    return State::Write(val);
-                }
-                JT => self.do_jump(cur_opcode, |it: i64| it != 0),
-                JF => self.do_jump(cur_opcode, |it: i64| it == 0),
-                JLT => self.do_jump_cmp(cur_opcode, |lhs: i64, rhs: i64| lhs < rhs),
-                JE => self.do_jump_cmp(cur_opcode, |lhs: i64, rhs: i64| lhs == rhs),
-                HALT => {
-                    return State::Halted(self.mem[0]);
-                }
-                _ => eprintln!("Unknown opcode {}!", cur_opcode % 100),
+                WRITE => return State::Write(self.write()),
+                JT => self.jump(|it| it != 0),
+                JF => self.jump(|it| it == 0),
+                LT => self.cmp(|lhs, rhs| lhs < rhs),
+                EQ => self.cmp(|lhs, rhs| lhs == rhs),
+                RB => self.set_rel_base(),
+                HALT => return State::Halted(self.mem[0]),
+                _ => panic!("Unknown opcode {}!", cur_opcode),
             }
         }
     }
 
+    fn do_arith<F>(&mut self, f: F)
+    where
+        F: FnOnce(i64, i64) -> i64,
+    {
+        let new_val = f(self.get_param(1), self.get_param(2));
+        self.set_param(3, new_val);
+        self.vpc += 4;
+    }
+
     pub fn input(&mut self, inp: i64) {
-        let dst_idx = self.mem[self.vpc as usize + 1];
-        self.mem[dst_idx as usize] = inp;
+        self.set_param(1, inp);
         self.vpc += 2;
     }
 
-    fn do_add(&mut self, opcode: i64) {
-        let lhs = self.load_opcode(opcode, 1);
-        let rhs = self.load_opcode(opcode, 2);
-
-        let dest = self.mem[(self.vpc + 3) as usize];
-        self.mem[dest as usize] = lhs + rhs;
-
-        self.vpc += 4;
-    }
-
-    fn do_mul(&mut self, opcode: i64) {
-        let lhs = self.load_opcode(opcode, 1);
-        let rhs = self.load_opcode(opcode, 2);
-
-        let dest = self.mem[(self.vpc + 3) as usize];
-        self.mem[dest as usize] = lhs * rhs;
-
-        self.vpc += 4;
-    }
-
-    fn write(&mut self, opcode: i64) -> i64 {
-        let val = self.load_opcode(opcode, 1);
+    fn write(&mut self) -> i64 {
+        let val = self.get_param(1);
         self.vpc += 2;
 
         val
     }
 
-    fn do_jump<F>(&mut self, opcode: i64, f: F)
+    fn jump<F>(&mut self, f: F)
     where
-        F: Fn(i64) -> bool,
+        F: FnOnce(i64) -> bool,
     {
-        let val = self.load_opcode(opcode, 1);
-
-        if f(val) {
-            self.vpc = self.load_opcode(opcode, 2);
+        self.vpc = if f(self.get_param(1)) {
+            self.get_param(2) as usize
         } else {
-            self.vpc += 3;
+            self.vpc + 3
         }
     }
 
-    fn do_jump_cmp<F>(&mut self, opcode: i64, f: F)
+    fn cmp<F>(&mut self, f: F)
     where
-        F: Fn(i64, i64) -> bool,
+        F: FnOnce(i64, i64) -> bool,
     {
-        let lhs = self.load_opcode(opcode, 1);
-        let rhs = self.load_opcode(opcode, 2);
-
-        let dst = self.mem[(self.vpc + 3) as usize];
-
-        self.mem[dst as usize] = if f(lhs, rhs) { 1 } else { 0 };
+        let cond = f(self.get_param(1), self.get_param(2));
+        self.set_param(3, if cond { 1 } else { 0 });
         self.vpc += 4;
     }
 
-    fn load_opcode(&self, opcode: i64, param_num: i64) -> i64 {
-        let val = self.mem[(self.vpc + param_num) as usize];
-        match self.check_mode(opcode, param_num - 1) {
-            ParameterMode::Position => self.mem[val as usize],
-            ParameterMode::Immediate => val,
+    fn set_rel_base(&mut self) {
+        self.rel_base += self.get_param(1);
+        self.vpc += 2;
+    }
+
+    fn get_param_mode(&self, param_idx: i64) -> ParameterMode {
+        let denom = 10 * 10i64.pow(param_idx as u32);
+        let val = self.mem[self.vpc].div(denom);
+
+        // A mod B = A - [A/B] * B
+        match val - val.div(10) * 10 {
+            0 => ParameterMode::Position,
+            1 => ParameterMode::Immediate,
+            2 => ParameterMode::Relative,
+            _ => panic!("Unknown parameter mode!"),
         }
     }
 
-    fn check_mode(&self, opcode: i64, val: i64) -> ParameterMode {
-        let s = opcode.to_string().chars().rev().collect::<String>();
+    fn get_param(&self, param: i64) -> i64 {
+        let memory = &self.mem;
+        let val = memory[self.vpc + (param as usize)];
 
-        if s.len() <= 2 {
-            return ParameterMode::Position;
+        match self.get_param_mode(param) {
+            ParameterMode::Position => memory[val as usize],
+            ParameterMode::Immediate => val,
+            ParameterMode::Relative => memory[(self.rel_base + val) as usize],
         }
+    }
 
-        let tail = s.chars().skip(2).collect::<String>();
-        if val >= tail.len() as i64 {
-            return ParameterMode::Position;
-        }
+    fn set_param(&mut self, param: i64, new_val: i64) {
+        let val = self.mem[self.vpc + (param as usize)] as usize;
 
-        match tail.chars().nth(val as usize) {
-            Some(c) => {
-                return if c == '0' {
-                    ParameterMode::Position
-                } else {
-                    ParameterMode::Immediate
-                };
-            }
-            _ => panic!("Something went wrong!"),
+        match self.get_param_mode(param) {
+            ParameterMode::Position => self.mem[val] = new_val,
+            ParameterMode::Relative => self.mem[(self.rel_base as usize) + val] = new_val,
+            _ => panic!("Invalid parameter mode for write!"),
         }
     }
 }
@@ -172,47 +168,95 @@ mod tests {
         let mut vm = IntCode::new(inp);
         vm.run();
 
-        assert_eq!(vm.mem, expected);
+        assert!(vm.mem.starts_with(&expected));
     }
 
     #[test]
     fn test_two() {
-        let mut inp: Vec<i64> = vec![2, 3, 0, 3, 99];
+        let inp: Vec<i64> = vec![2, 3, 0, 3, 99];
         let expected: Vec<i64> = vec![2, 3, 0, 6, 99];
 
         let mut vm = IntCode::new(inp);
         vm.run();
 
-        assert_eq!(vm.mem, expected);
+        assert!(vm.mem.starts_with(&expected));
     }
 
     #[test]
     fn test_three() {
-        let mut inp: Vec<i64> = vec![2, 4, 4, 5, 99, 0];
+        let inp: Vec<i64> = vec![2, 4, 4, 5, 99, 0];
         let expected: Vec<i64> = vec![2, 4, 4, 5, 99, 9801];
 
         let mut vm = IntCode::new(inp);
         vm.run();
 
-        assert_eq!(vm.mem, expected);
+        assert!(vm.mem.starts_with(&expected));
     }
 
     #[test]
     fn test_four() {
-        let mut inp: Vec<i64> = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
+        let inp: Vec<i64> = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
         let expected: Vec<i64> = vec![30, 1, 1, 4, 2, 5, 6, 0, 99];
 
         let mut vm = IntCode::new(inp);
         vm.run();
 
-        assert_eq!(vm.mem, expected);
+        println!("{:?}", vm.mem);
+        println!("{:?}", expected);
+
+        assert!(vm.mem.starts_with(&expected));
+    }
+
+    #[test]
+    fn test_five() {
+        let inp = vec![
+            109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
+        ];
+
+        let mut vm = IntCode::new(inp.clone());
+
+        for it in inp {
+            match vm.run() {
+                State::Write(n) => assert_eq!(it, n),
+                _ => {}
+            }
+        }
+    }
+
+    #[test]
+    fn test_six() {
+        let inp = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
+
+        let mut vm = IntCode::new(inp.clone());
+
+        match vm.run() {
+            State::Write(n) => assert_eq!(1219070632396864, n),
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn test_seven() {
+        let inp = vec![104, 1125899906842624, 99];
+
+        let mut vm = IntCode::new(inp.clone());
+
+        match vm.run() {
+            State::Write(n) => assert_eq!(1125899906842624, n),
+            _ => {}
+        }
     }
 
     #[test]
     fn test_mode() {
-        let vm = IntCode::new(vec![]);
-        assert_eq!(vm.check_mode(1002, 0), ParameterMode::Position);
-        assert_eq!(vm.check_mode(1002, 1), ParameterMode::Immediate);
-        assert_eq!(vm.check_mode(1002, 2), ParameterMode::Position);
+        let vm = IntCode::new(vec![1002]);
+        assert_eq!(vm.get_param_mode(1), ParameterMode::Position);
+        assert_eq!(vm.get_param_mode(2), ParameterMode::Immediate);
+        assert_eq!(vm.get_param_mode(3), ParameterMode::Position);
+
+        let vm = IntCode::new(vec![2002]);
+        assert_eq!(vm.get_param_mode(1), ParameterMode::Position);
+        assert_eq!(vm.get_param_mode(2), ParameterMode::Relative);
+        assert_eq!(vm.get_param_mode(3), ParameterMode::Position);
     }
 }
