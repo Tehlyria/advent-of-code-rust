@@ -7,6 +7,9 @@ edition = "2018"
 aoc-runner = "^0.2"
 aoc-runner-derive = "^0.2"
 permutohedron = "0.2.4"
+regex = "1"
+itertools = "0.8.2"
+num = "0.1.32"
 
 [[bin]]
 name = "aoc"
