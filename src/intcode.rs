@@ -30,7 +30,7 @@ const HALT: i64 = 99;
 
 impl IntCode {
     pub fn new(init_mem: &[i64]) -> Self {
-        let mut vec = vec![0; 0x500];
+        let mut vec = vec![0; 0x1000];
         vec[..init_mem.len()].clone_from_slice(init_mem);
 
         Self {
@@ -38,6 +38,10 @@ impl IntCode {
             rel_base: 0,
             mem: vec,
         }
+    }
+
+    pub fn init_ram(&mut self, idx: usize, val: i64) {
+        self.mem[idx] = val;
     }
 
     pub fn run_with_input(&mut self, mut inp_idx: usize, inp: &[i64]) -> State {
