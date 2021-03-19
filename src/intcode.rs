@@ -1,5 +1,3 @@
-use std::ops::Div;
-
 pub struct IntCode {
     vpc: usize,
     rel_base: i64,
@@ -31,13 +29,14 @@ const RB: i64 = 9;
 const HALT: i64 = 99;
 
 impl IntCode {
-    pub fn new(mut init_mem: Vec<i64>) -> Self {
-        init_mem.resize(0x500, 0);
+    pub fn new(init_mem: &[i64]) -> Self {
+        let mut vec = vec![0; 0x500];
+        vec[..init_mem.len()].clone_from_slice(init_mem);
 
         Self {
             vpc: 0,
             rel_base: 0,
-            mem: init_mem,
+            mem: vec,
         }
     }
 
@@ -56,8 +55,7 @@ impl IntCode {
     pub fn run(&mut self) -> State {
         loop {
             let opc = self.mem[self.vpc];
-            // A mod B = A - [A/B] * B
-            let cur_opcode = opc - opc.div(100) * 100;
+            let cur_opcode = opc % 100;
 
             match cur_opcode {
                 ADD => self.do_arith(|lhs, rhs| lhs + rhs),
@@ -123,10 +121,9 @@ impl IntCode {
 
     fn get_param_mode(&self, param_idx: i64) -> ParameterMode {
         let denom = 10 * 10i64.pow(param_idx as u32);
-        let val = self.mem[self.vpc].div(denom);
+        let val = self.mem[self.vpc] / denom;
 
-        // A mod B = A - [A/B] * B
-        match val - val.div(10) * 10 {
+        match val % 10 {
             0 => ParameterMode::Position,
             1 => ParameterMode::Immediate,
             2 => ParameterMode::Relative,
@@ -165,7 +162,7 @@ mod tests {
         let inp = vec![1, 0, 0, 0, 99];
         let expected: Vec<i64> = vec![2, 0, 0, 0, 99];
 
-        let mut vm = IntCode::new(inp);
+        let mut vm = IntCode::new(&inp);
         vm.run();
 
         assert!(vm.mem.starts_with(&expected));
@@ -176,7 +173,7 @@ mod tests {
         let inp: Vec<i64> = vec![2, 3, 0, 3, 99];
         let expected: Vec<i64> = vec![2, 3, 0, 6, 99];
 
-        let mut vm = IntCode::new(inp);
+        let mut vm = IntCode::new(&inp);
         vm.run();
 
         assert!(vm.mem.starts_with(&expected));
@@ -187,7 +184,7 @@ mod tests {
         let inp: Vec<i64> = vec![2, 4, 4, 5, 99, 0];
         let expected: Vec<i64> = vec![2, 4, 4, 5, 99, 9801];
 
-        let mut vm = IntCode::new(inp);
+        let mut vm = IntCode::new(&inp);
         vm.run();
 
         assert!(vm.mem.starts_with(&expected));
@@ -198,11 +195,8 @@ mod tests {
         let inp: Vec<i64> = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
         let expected: Vec<i64> = vec![30, 1, 1, 4, 2, 5, 6, 0, 99];
 
-        let mut vm = IntCode::new(inp);
+        let mut vm = IntCode::new(&inp);
         vm.run();
-
-        println!("{:?}", vm.mem);
-        println!("{:?}", expected);
 
         assert!(vm.mem.starts_with(&expected));
     }
@@ -213,12 +207,11 @@ mod tests {
             109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
         ];
 
-        let mut vm = IntCode::new(inp.clone());
+        let mut vm = IntCode::new(&inp);
 
         for it in inp {
-            match vm.run() {
-                State::Write(n) => assert_eq!(it, n),
-                _ => {}
+            if let State::Write(n) = vm.run() {
+                assert_eq!(it, n)
             }
         }
     }
@@ -227,11 +220,10 @@ mod tests {
     fn test_six() {
         let inp = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
 
-        let mut vm = IntCode::new(inp.clone());
+        let mut vm = IntCode::new(&inp);
 
-        match vm.run() {
-            State::Write(n) => assert_eq!(1219070632396864, n),
-            _ => {}
+        if let State::Write(n) = vm.run() {
+            assert_eq!(1219070632396864, n)
         }
     }
 
@@ -239,22 +231,21 @@ mod tests {
     fn test_seven() {
         let inp = vec![104, 1125899906842624, 99];
 
-        let mut vm = IntCode::new(inp.clone());
+        let mut vm = IntCode::new(&inp);
 
-        match vm.run() {
-            State::Write(n) => assert_eq!(1125899906842624, n),
-            _ => {}
+        if let State::Write(n) = vm.run() {
+            assert_eq!(1125899906842624, n)
         }
     }
 
     #[test]
     fn test_mode() {
-        let vm = IntCode::new(vec![1002]);
+        let vm = IntCode::new(&vec![1002]);
         assert_eq!(vm.get_param_mode(1), ParameterMode::Position);
         assert_eq!(vm.get_param_mode(2), ParameterMode::Immediate);
         assert_eq!(vm.get_param_mode(3), ParameterMode::Position);
 
-        let vm = IntCode::new(vec![2002]);
+        let vm = IntCode::new(&vec![2002]);
         assert_eq!(vm.get_param_mode(1), ParameterMode::Position);
         assert_eq!(vm.get_param_mode(2), ParameterMode::Relative);
         assert_eq!(vm.get_param_mode(3), ParameterMode::Position);

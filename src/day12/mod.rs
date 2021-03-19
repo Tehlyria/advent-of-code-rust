@@ -1,10 +1,23 @@
-use num::integer::lcm;
-use regex::Regex;
+use std::cmp::Ordering;
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Debug, Clone)]
+use aoc_runner_derive::{aoc, aoc_generator};
+use num::integer::lcm;
+use parse_display::FromStr as PFromStr;
+use std::ops::AddAssign;
+
+#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone, PFromStr)]
+#[display("<x={0}, y={1}, z={2}>")]
 pub struct Vec3d(i64, i64, i64);
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Debug, Clone)]
+impl AddAssign for Vec3d {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+        self.2 += rhs.2;
+    }
+}
+
+#[derive(Ord, PartialOrd, Eq, PartialEq, Clone)]
 pub struct Planet {
     pos: Vec3d,
     vel: Vec3d,
@@ -26,19 +39,9 @@ impl Planet {
 
 #[aoc_generator(day12)]
 pub fn generate(inp: &str) -> Vec<Planet> {
-    let re = Regex::new(r"<x=(-?[\d]+), y=(-?[\d]+), z=(-?[\d]+)>").unwrap();
-
     inp.lines()
-        .map(|it| {
-            assert!(re.is_match(it));
-
-            let cap = re.captures(it).unwrap();
-            let x = cap[1].parse::<i64>().unwrap();
-            let y = cap[2].parse::<i64>().unwrap();
-            let z = cap[3].parse::<i64>().unwrap();
-
-            Planet::new(Vec3d(x, y, z), Vec3d(0, 0, 0))
-        })
+        .filter_map(|it| it.parse::<Vec3d>().ok())
+        .map(|it| Planet::new(it, Vec3d(0, 0, 0)))
         .collect()
 }
 
@@ -51,22 +54,22 @@ fn apply_gravity(v: &mut Vec<Planet>) {
                 continue;
             }
 
-            if ot.pos.0 > it.pos.0 {
-                it.vel.0 += 1;
-            } else if ot.pos.0 < it.pos.0 {
-                it.vel.0 -= 1;
-            }
+            it.vel.0 += match ot.pos.0.cmp(&it.pos.0) {
+                Ordering::Greater => 1,
+                Ordering::Less => -1,
+                _ => 0,
+            };
 
-            if ot.pos.1 > it.pos.1 {
-                it.vel.1 += 1;
-            } else if ot.pos.1 < it.pos.1 {
-                it.vel.1 -= 1;
-            }
+            it.vel.1 += match ot.pos.1.cmp(&it.pos.1) {
+                Ordering::Greater => 1,
+                Ordering::Less => -1,
+                _ => 0,
+            };
 
-            if ot.pos.2 > it.pos.2 {
-                it.vel.2 += 1;
-            } else if ot.pos.2 < it.pos.2 {
-                it.vel.2 -= 1;
+            it.vel.2 += match ot.pos.2.cmp(&it.pos.2) {
+                Ordering::Greater => 1,
+                Ordering::Less => -1,
+                _ => 0,
             }
         }
     }
@@ -74,22 +77,19 @@ fn apply_gravity(v: &mut Vec<Planet>) {
 
 fn apply_velocity(v: &mut Vec<Planet>) {
     v.iter_mut().for_each(|it| {
-        it.pos.0 += it.vel.0;
-        it.pos.1 += it.vel.1;
-        it.pos.2 += it.vel.2;
+        it.pos += it.vel;
     });
 }
 
-fn total_energy(planets: &Vec<Planet>) -> i64 {
-    planets
-        .iter()
-        .map(|it| it.kinetic_energy() * it.potential_energy())
-        .sum::<i64>()
+fn total_energy(planets: &[Planet]) -> i64 {
+    planets.iter().fold(0, |acc, it| {
+        acc + it.kinetic_energy() * it.potential_energy()
+    })
 }
 
 #[aoc(day12, part1)]
-pub fn part1(v: &Vec<Planet>) -> i64 {
-    let mut planets = v.clone();
+pub fn part1(v: &[Planet]) -> i64 {
+    let mut planets = v.to_vec();
 
     for _ in 0..1000 {
         apply_gravity(&mut planets);
@@ -100,8 +100,8 @@ pub fn part1(v: &Vec<Planet>) -> i64 {
 }
 
 #[aoc(day12, part2)]
-pub fn part2(v: &Vec<Planet>) -> i64 {
-    let mut planets = v.clone();
+pub fn part2(v: &[Planet]) -> i64 {
+    let mut planets = v.to_vec();
 
     let mut steps = 0;
 

@@ -1,23 +1,43 @@
-use crate::intcode::{IntCode, State};
 use std::collections::HashMap;
+use std::ops::{Add, AddAssign};
 
-#[derive(PartialEq, Eq)]
+use aoc_runner_derive::{aoc, aoc_generator};
+use itertools::Itertools;
+
+use crate::intcode::{IntCode, State};
+
+#[derive(Copy, Clone, PartialEq, Eq)]
 enum Color {
     Black,
     White,
 }
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(PartialOrd, Ord, Eq, PartialEq, Hash, Copy, Clone)]
 struct MapPosition(i64, i64);
+
+impl Add for MapPosition {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        MapPosition(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+impl AddAssign for MapPosition {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+    }
+}
 
 #[aoc_generator(day11)]
 pub fn generate(inp: &str) -> Vec<i64> {
-    inp.split(",").map(|it| it.parse().unwrap()).collect()
+    inp.split(',').map(|it| it.parse().unwrap()).collect()
 }
 
-fn run_robot(v: &Vec<i64>, c: Color) -> HashMap<MapPosition, Color> {
+fn run_robot(v: &[i64], c: Color) -> HashMap<MapPosition, Color> {
     let mut map: HashMap<MapPosition, Color> = HashMap::new();
-    let mut vm = IntCode::new(v.clone());
+    let mut vm = IntCode::new(v);
 
     let mut robot_pos = MapPosition(0, 0);
     let mut cur_dir = MapPosition(0, 1);
@@ -26,20 +46,15 @@ fn run_robot(v: &Vec<i64>, c: Color) -> HashMap<MapPosition, Color> {
 
     loop {
         match vm.run() {
-            State::Waiting => {
-                if let Some(col) = map.get(&robot_pos) {
-                    vm.input(if *col == Color::White { 1 } else { 0 });
-                } else {
-                    vm.input(0);
-                }
-            }
+            State::Waiting => match map.get(&robot_pos) {
+                Some(col) if *col == Color::White => vm.input(1),
+                _ => vm.input(0),
+            },
             State::Write(n) => {
                 let new_col = if n == 0 { Color::Black } else { Color::White };
-                if let Some(col) = map.get_mut(&robot_pos) {
-                    *col = new_col;
-                } else {
-                    map.insert(MapPosition(robot_pos.0, robot_pos.1), new_col);
-                }
+                map.entry(robot_pos)
+                    .and_modify(|it| *it = new_col)
+                    .or_insert(new_col);
 
                 if let State::Write(n) = vm.run() {
                     // n = 0 => turn left
@@ -60,7 +75,7 @@ fn run_robot(v: &Vec<i64>, c: Color) -> HashMap<MapPosition, Color> {
                         _ => unreachable!("Invalid direction!"),
                     }
 
-                    robot_pos = MapPosition(robot_pos.0 + cur_dir.0, robot_pos.1 + cur_dir.1);
+                    robot_pos += cur_dir;
                 } else {
                     unreachable!("Didn't output two writes!");
                 }
@@ -73,20 +88,23 @@ fn run_robot(v: &Vec<i64>, c: Color) -> HashMap<MapPosition, Color> {
 }
 
 #[aoc(day11, part1)]
-pub fn part1(v: &Vec<i64>) -> i64 {
+pub fn part1(v: &[i64]) -> i64 {
     let map = run_robot(v, Color::Black);
     map.len() as i64
 }
 
 #[aoc(day11, part2)]
-pub fn part2(v: &Vec<i64>) -> String {
+pub fn part2(v: &[i64]) -> String {
     let map = run_robot(v, Color::White);
 
-    let mut out: Vec<MapPosition> = Vec::new();
-    map.iter().for_each(|(k, v)| match v {
-        Color::White => out.push(MapPosition(k.0, k.1)),
-        _ => {}
-    });
+    let mut out = map
+        .iter()
+        .filter_map(|(pos, col)| match *col {
+            Color::White => Some(*pos),
+            _ => None,
+        })
+        .sorted()
+        .collect_vec();
 
     out.sort_by(|l, r| {
         if l.0 == r.0 {
@@ -96,15 +114,15 @@ pub fn part2(v: &Vec<i64>) -> String {
         }
     });
 
-    let min_y = out.iter().map(|it| it.1).min().unwrap();
+    let min_y = out.iter().min_by_key(|it| it.1).unwrap().1;
 
     let results = out
         .iter()
-        .map(|it| MapPosition(it.0, it.1 + i64::abs(min_y)))
-        .collect::<Vec<MapPosition>>();
+        .map(|it| it.add(MapPosition(0, i64::abs(min_y))))
+        .collect_vec();
 
-    let max_x = results.iter().map(|it| it.0).max().unwrap();
-    let max_y = results.iter().map(|it| it.1).max().unwrap();
+    let max_x = results.iter().max_by_key(|it| it.0).unwrap().0;
+    let max_y = results.iter().max_by_key(|it| it.1).unwrap().1;
 
     assert!(results.iter().all(|it| it.1 >= 0));
 

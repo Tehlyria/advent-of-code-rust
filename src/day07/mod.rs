@@ -1,31 +1,30 @@
-use crate::intcode::{IntCode, State};
+use aoc_runner_derive::{aoc, aoc_generator};
 use permutohedron::LexicalPermutation;
+
+use crate::intcode::{IntCode, State};
 
 #[aoc_generator(day7)]
 pub fn generate(inp: &str) -> Vec<i64> {
-    inp.split(",").map(|it| it.parse().unwrap()).collect()
+    inp.split(',').map(|it| it.parse().unwrap()).collect()
 }
 
 fn permutate(mut data: [i64; 5]) -> Vec<Vec<i64>> {
-    let mut permutations = Vec::new();
+    let mut permutations = vec![data.to_vec()];
 
-    loop {
+    while data.next_permutation() {
         permutations.push(data.to_vec());
-        if !data.next_permutation() {
-            break;
-        }
     }
 
     permutations
 }
 
 #[aoc(day7, part1)]
-pub fn part1(mem: &Vec<i64>) -> i64 {
+pub fn part1(mem: &[i64]) -> Option<i64> {
     permutate([0, 1, 2, 3, 4])
         .iter()
         .map(|it| {
             it.iter().fold(0, |acc, elem| {
-                let mut vm = IntCode::new(mem.clone());
+                let mut vm = IntCode::new(mem);
 
                 match vm.run_with_input(0, &[*elem, acc]) {
                     State::Halted(n) => n,
@@ -35,11 +34,10 @@ pub fn part1(mem: &Vec<i64>) -> i64 {
             })
         })
         .max()
-        .unwrap()
 }
 
 #[aoc(day7, part2)]
-pub fn part2(mem: &Vec<i64>) -> i64 {
+pub fn part2(mem: &[i64]) -> Option<i64> {
     permutate([5, 6, 7, 8, 9])
         .iter()
         .map(|it| {
@@ -48,11 +46,11 @@ pub fn part2(mem: &Vec<i64>) -> i64 {
             let mut needs_phases = true;
 
             let mut vms = vec![
-                IntCode::new(mem.clone()),
-                IntCode::new(mem.clone()),
-                IntCode::new(mem.clone()),
-                IntCode::new(mem.clone()),
-                IntCode::new(mem.clone()),
+                IntCode::new(mem),
+                IntCode::new(mem),
+                IntCode::new(mem),
+                IntCode::new(mem),
+                IntCode::new(mem),
             ];
 
             loop {
@@ -76,5 +74,4 @@ pub fn part2(mem: &Vec<i64>) -> i64 {
             }
         })
         .max()
-        .unwrap()
 }
