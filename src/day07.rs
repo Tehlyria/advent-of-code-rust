@@ -27,9 +27,8 @@ pub fn part1(mem: &[i64]) -> Option<i64> {
                 let mut vm = IntCode::new(mem);
 
                 match vm.run_with_input(0, &[*elem, acc]) {
-                    State::Halted(n) => n,
-                    State::Write(n) => n,
-                    _ => panic!("Too many inputs?"),
+                    State::Write(n) | State::Halted(n) => n,
+                    State::Waiting => panic!("Too many inputs?"),
                 }
             })
         })
@@ -54,7 +53,7 @@ pub fn part2(mem: &[i64]) -> Option<i64> {
             ];
 
             loop {
-                let inp_idx = if needs_phases { 0 } else { 1 };
+                let inp_idx = usize::from(!needs_phases);
 
                 for i in 0..it.len() {
                     let it_val = it[i];
@@ -66,7 +65,7 @@ pub fn part2(mem: &[i64]) -> Option<i64> {
                             last_output = n;
                             last = n;
                         }
-                        _ => panic!("Too many inputs?"),
+                        State::Waiting => panic!("Too many inputs?"),
                     }
                 }
 

@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_samples_p1() {
-        let inp = vec![(12u64, 2u64), (14, 2), (1969, 654), (100756, 33583)];
+        let inp = vec![(12u64, 2u64), (14, 2), (1969, 654), (100_756, 33583)];
 
         for (val, expected) in inp {
             let inp = vec![val];
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_samples_p2() {
-        let inp = vec![(14, 2), (1969, 966), (100756, 50346)];
+        let inp = vec![(14, 2), (1969, 966), (100_756, 50346)];
 
         for (val, expected) in inp {
             let inp = vec![val];

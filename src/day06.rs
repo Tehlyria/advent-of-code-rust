@@ -23,7 +23,7 @@ fn count_all(dag: &HashMap<String, Vec<String>>) -> usize {
 
         for elem in cur {
             if let Some(node) = dag.get(elem) {
-                count += count_all_impl(node, &dag);
+                count += count_all_impl(node, dag);
             }
         }
 
@@ -44,7 +44,7 @@ fn find_node(
         return true;
     } else if let Some(node) = dag.get(current) {
         for chld in node {
-            if find_node(chld, &target, path, dag) {
+            if find_node(chld, target, path, dag) {
                 path.push(chld.clone());
                 return true;
             }
@@ -54,11 +54,11 @@ fn find_node(
     false
 }
 
-fn find(target: String, dag: &HashMap<String, Vec<String>>) -> Vec<String> {
+fn find(target: &str, dag: &HashMap<String, Vec<String>>) -> Vec<String> {
     let start = String::from("COM");
 
     let mut path: Vec<String> = Vec::new();
-    find_node(&start, &target, &mut path, &dag);
+    find_node(&start, target, &mut path, dag);
     path.push(start);
     path.reverse();
 
@@ -67,13 +67,13 @@ fn find(target: String, dag: &HashMap<String, Vec<String>>) -> Vec<String> {
 
 #[aoc(day6, part1)]
 pub fn part1(dag: &HashMap<String, Vec<String>>) -> usize {
-    count_all(&dag)
+    count_all(dag)
 }
 
 #[aoc(day6, part2)]
 pub fn part2(dag: &HashMap<String, Vec<String>>) -> usize {
-    let path_to_me = find(String::from("YOU"), &dag);
-    let path_to_santa = find(String::from("SAN"), &dag);
+    let path_to_me = find(&String::from("YOU"), dag);
+    let path_to_santa = find(&String::from("SAN"), dag);
 
     let mine = path_to_me
         .iter()

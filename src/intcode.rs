@@ -114,7 +114,7 @@ impl IntCode {
         F: FnOnce(i64, i64) -> bool,
     {
         let cond = f(self.get_param(1), self.get_param(2));
-        self.set_param(3, if cond { 1 } else { 0 });
+        self.set_param(3, i64::from(cond));
         self.vpc += 4;
     }
 
@@ -152,7 +152,7 @@ impl IntCode {
         match self.get_param_mode(param) {
             ParameterMode::Position => self.mem[val] = new_val,
             ParameterMode::Relative => self.mem[(self.rel_base as usize) + val] = new_val,
-            _ => panic!("Invalid parameter mode for write!"),
+            ParameterMode::Immediate => panic!("Invalid parameter mode for write!"),
         }
     }
 }
@@ -215,41 +215,41 @@ mod tests {
 
         for it in inp {
             if let State::Write(n) = vm.run() {
-                assert_eq!(it, n)
+                assert_eq!(it, n);
             }
         }
     }
 
     #[test]
     fn test_six() {
-        let inp = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
+        let inp = vec![1102, 34_915_192, 34_915_192, 7, 4, 7, 99, 0];
 
         let mut vm = IntCode::new(&inp);
 
         if let State::Write(n) = vm.run() {
-            assert_eq!(1219070632396864, n)
+            assert_eq!(1_219_070_632_396_864, n);
         }
     }
 
     #[test]
     fn test_seven() {
-        let inp = vec![104, 1125899906842624, 99];
+        let inp = vec![104, 1_125_899_906_842_624, 99];
 
         let mut vm = IntCode::new(&inp);
 
         if let State::Write(n) = vm.run() {
-            assert_eq!(1125899906842624, n)
+            assert_eq!(1_125_899_906_842_624, n);
         }
     }
 
     #[test]
     fn test_mode() {
-        let vm = IntCode::new(&vec![1002]);
+        let vm = IntCode::new(&[1002]);
         assert_eq!(vm.get_param_mode(1), ParameterMode::Position);
         assert_eq!(vm.get_param_mode(2), ParameterMode::Immediate);
         assert_eq!(vm.get_param_mode(3), ParameterMode::Position);
 
-        let vm = IntCode::new(&vec![2002]);
+        let vm = IntCode::new(&[2002]);
         assert_eq!(vm.get_param_mode(1), ParameterMode::Position);
         assert_eq!(vm.get_param_mode(2), ParameterMode::Relative);
         assert_eq!(vm.get_param_mode(3), ParameterMode::Position);

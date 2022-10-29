@@ -101,7 +101,7 @@ pub fn part2(v: &[i64]) -> String {
         .iter()
         .filter_map(|(pos, col)| match *col {
             Color::White => Some(*pos),
-            _ => None,
+            Color::Black => None,
         })
         .sorted()
         .collect_vec();

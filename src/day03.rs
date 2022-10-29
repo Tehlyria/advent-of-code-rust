@@ -67,18 +67,18 @@ fn get_intersections(lhs: &[Position], rhs: &[Position]) -> Vec<Position> {
 #[aoc(day3, part1)]
 pub fn part1(wires: &[Vec<Position>; 2]) -> Option<i64> {
     let [first_wire, second_wire] = wires;
-    let intersections = get_intersections(&first_wire, &second_wire);
+    let intersections = get_intersections(first_wire, second_wire);
     intersections.iter().map(|it| it.0.abs() + it.1.abs()).min()
 }
 
 #[aoc(day3, part2)]
 pub fn part2(wires: &[Vec<Position>; 2]) -> Option<i64> {
-    let [first_wire, second_wire] = wires;
-    let intersections = get_intersections(&first_wire, &second_wire);
-
     fn pos(v: &[Position], e: &Position) -> Option<i64> {
         v.iter().position(|it| *it == *e).map(|it| it as i64 + 1)
     }
+
+    let [first_wire, second_wire] = wires;
+    let intersections = get_intersections(first_wire, second_wire);
 
     intersections
         .iter()

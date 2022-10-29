@@ -1,9 +1,8 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::ops::RangeInclusive;
+use std::ops::{Div, RangeInclusive};
 
 use aoc_runner_derive::{aoc, aoc_generator};
-use num::Integer;
 use parse_display::{Display as PDisplay, FromStr as PFromStr};
 
 #[derive(PDisplay, PFromStr, Clone, Debug)]
@@ -34,7 +33,7 @@ pub fn generate(inp: &str) -> Vec<Recipe> {
         .filter_map(|it| {
             let mut spl = it.split("=>");
             let inputs = spl.next().map(parse_ingredients)?;
-            let output = spl.next().map(parse_single_ingredient).unwrap_or(None)?;
+            let output = spl.next().and_then(parse_single_ingredient)?;
 
             Some(Recipe { inputs, output })
         })
@@ -45,6 +44,7 @@ fn find_recipe<'a>(name: &str, all: &'a [Recipe]) -> Option<&'a Recipe> {
     all.iter().find(|it| it.output.1.eq(&name))
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn count_ore_impl(
     inp: &str,
     amount: usize,
@@ -78,7 +78,8 @@ fn count_ore_impl(
     }
 
     let recipe = find_recipe(inp, recipes).unwrap();
-    let need_steps = need.div_ceil(&recipe.output.0);
+    let need_steps = (need as f64).div(recipe.output.0 as f64).ceil() as usize;
+
     let produces = recipe.output.0 * need_steps;
     if need < produces {
         let leftover = produces - need;
@@ -187,7 +188,7 @@ mod tests {
                           176 ORE => 6 VJHF";
 
         let data = generate(inp);
-        assert_eq!(180697, count_ore("FUEL", 1, &data));
+        assert_eq!(180_697, count_ore("FUEL", 1, &data));
 
         let inp = "171 ORE => 8 CNZTR\n\
                           7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL\n\
@@ -208,7 +209,7 @@ mod tests {
                           5 BHXH, 4 VRPVC => 5 LTCX";
 
         let data = generate(inp);
-        assert_eq!(2210736, count_ore("FUEL", 1, &data));
+        assert_eq!(2_210_736, count_ore("FUEL", 1, &data));
     }
 
     #[test]
@@ -224,7 +225,7 @@ mod tests {
                           3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT";
 
         let data = generate(inp);
-        assert_eq!(82892753, part2(&data));
+        assert_eq!(82_892_753, part2(&data));
 
         let inp = "2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG\n\
                           17 NVRVD, 3 JNWZP => 8 VPVL\n\
@@ -240,7 +241,7 @@ mod tests {
                           176 ORE => 6 VJHF";
 
         let data = generate(inp);
-        assert_eq!(5586022, part2(&data));
+        assert_eq!(5_586_022, part2(&data));
 
         let inp = "171 ORE => 8 CNZTR\n\
                           7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL\n\
@@ -261,6 +262,6 @@ mod tests {
                           5 BHXH, 4 VRPVC => 5 LTCX";
 
         let data = generate(inp);
-        assert_eq!(460664, part2(&data));
+        assert_eq!(460_664, part2(&data));
     }
 }

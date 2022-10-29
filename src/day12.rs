@@ -48,8 +48,8 @@ pub fn generate(inp: &str) -> Vec<Planet> {
 fn apply_gravity(v: &mut Vec<Planet>) {
     let tmp = v.clone();
 
-    for it in v.iter_mut() {
-        for ot in tmp.iter() {
+    for it in v {
+        for ot in &tmp {
             if it == ot {
                 continue;
             }
@@ -57,28 +57,28 @@ fn apply_gravity(v: &mut Vec<Planet>) {
             it.vel.0 += match ot.pos.0.cmp(&it.pos.0) {
                 Ordering::Greater => 1,
                 Ordering::Less => -1,
-                _ => 0,
+                Ordering::Equal => 0,
             };
 
             it.vel.1 += match ot.pos.1.cmp(&it.pos.1) {
                 Ordering::Greater => 1,
                 Ordering::Less => -1,
-                _ => 0,
+                Ordering::Equal => 0,
             };
 
             it.vel.2 += match ot.pos.2.cmp(&it.pos.2) {
                 Ordering::Greater => 1,
                 Ordering::Less => -1,
-                _ => 0,
+                Ordering::Equal => 0,
             }
         }
     }
 }
 
-fn apply_velocity(v: &mut Vec<Planet>) {
-    v.iter_mut().for_each(|it| {
+fn apply_velocity(v: &mut [Planet]) {
+    for it in v {
         it.pos += it.vel;
-    });
+    }
 }
 
 fn total_energy(planets: &[Planet]) -> i64 {

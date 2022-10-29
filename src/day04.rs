@@ -10,11 +10,11 @@ pub struct InputRange(i64, i64);
 
 impl InputRange {
     pub fn filter_valid(&self) -> Filter<Range<i64>, fn(&i64) -> bool> {
-        (self.0..self.1).filter(|it| is_valid(it.to_string()))
+        (self.0..self.1).filter(|it| is_valid(&it.to_string()))
     }
 
     pub fn filter_valid_p2(&self) -> Filter<Range<i64>, fn(&i64) -> bool> {
-        (self.0..self.1).filter(|it| is_valid(it.to_string()) && one_double_pair(it.to_string()))
+        (self.0..self.1).filter(|it| is_valid(&it.to_string()) && one_double_pair(&it.to_string()))
     }
 }
 
@@ -31,13 +31,13 @@ fn two_adjacent_eq(num: &[char]) -> bool {
     num.windows(2).any(|it| it[0] == it[1])
 }
 
-fn one_double_pair(num: String) -> bool {
+fn one_double_pair(num: &str) -> bool {
     num.chars()
         .map(|it| num.chars().filter(|e| *e == it).count())
         .any(|it| it == 2)
 }
 
-fn is_valid(num: String) -> bool {
+fn is_valid(num: &str) -> bool {
     let chrs = num.chars().collect::<Vec<char>>();
 
     if !increasing(&chrs) {
@@ -68,15 +68,15 @@ mod tests {
     #[test]
     fn test_samples_p1() {
         {
-            let range = InputRange(111111, 111112);
+            let range = InputRange(111_111, 111_112);
             assert_eq!(1, part1(&range));
         }
         {
-            let range = InputRange(223450, 223451);
+            let range = InputRange(223_450, 223_451);
             assert_eq!(0, part1(&range));
         }
         {
-            let range = InputRange(123789, 123790);
+            let range = InputRange(123_789, 123_790);
             assert_eq!(0, part1(&range));
         }
     }
@@ -84,15 +84,15 @@ mod tests {
     #[test]
     fn test_samples_p2() {
         {
-            let range = InputRange(112233, 112234);
+            let range = InputRange(112_233, 112_234);
             assert_eq!(1, part2(&range));
         }
         {
-            let range = InputRange(123444, 123445);
+            let range = InputRange(123_444, 123_445);
             assert_eq!(0, part2(&range));
         }
         {
-            let range = InputRange(111122, 111123);
+            let range = InputRange(111_122, 111_123);
             assert_eq!(1, part2(&range));
         }
     }

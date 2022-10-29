@@ -14,7 +14,7 @@ fn run_vm(ram: &[i64], inp: i64) -> i64 {
         match vm.run() {
             State::Waiting => vm.input(inp),
             State::Write(n) => return n,
-            _ => {}
+            State::Halted(_) => {}
         }
     }
 }
