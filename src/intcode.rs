@@ -3,6 +3,7 @@ pub struct IntCode {
     vpc: usize,
     rel_base: i64,
     mem: Vec<i64>,
+    is_halted: bool,
 }
 
 #[derive(PartialEq, Debug)]
@@ -12,6 +13,7 @@ enum ParameterMode {
     Relative,
 }
 
+#[derive(Copy, Clone, Debug)]
 pub enum State {
     Waiting,
     Write(i64),
@@ -38,6 +40,7 @@ impl IntCode {
             vpc: 0,
             rel_base: 0,
             mem: vec,
+            is_halted: false,
         }
     }
 
@@ -72,7 +75,10 @@ impl IntCode {
                 LT => self.cmp(|lhs, rhs| lhs < rhs),
                 EQ => self.cmp(|lhs, rhs| lhs == rhs),
                 RB => self.set_rel_base(),
-                HALT => return State::Halted(self.mem[0]),
+                HALT => {
+                    self.is_halted = true;
+                    return State::Halted(self.mem[0]);
+                }
                 _ => panic!("Unknown opcode {}!", cur_opcode),
             }
         }
@@ -155,6 +161,10 @@ impl IntCode {
             ParameterMode::Relative => self.mem[(self.rel_base as usize) + val] = new_val,
             ParameterMode::Immediate => panic!("Invalid parameter mode for write!"),
         }
+    }
+
+    pub fn is_halted(&self) -> bool {
+        self.is_halted
     }
 }
 
