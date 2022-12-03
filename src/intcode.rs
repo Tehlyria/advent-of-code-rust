@@ -1,3 +1,4 @@
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub struct IntCode {
     vpc: usize,
     rel_base: i64,
