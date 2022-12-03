@@ -24,7 +24,7 @@ fn create_new_list(current: &[i32], next: &mut [i32]) {
     let signal_length = current.len();
     assert_eq!(signal_length, next.len());
 
-    for idx in 0..signal_length {
+    for (idx, elem) in next.iter_mut().enumerate() {
         let pattern = create_pattern(idx);
 
         let new_digit = current
@@ -32,7 +32,7 @@ fn create_new_list(current: &[i32], next: &mut [i32]) {
             .zip(pattern.iter().cycle().dropping(1))
             .map(|(lhs, rhs)| lhs * rhs)
             .sum::<i32>();
-        next[idx] = new_digit.abs() % 10;
+        *elem = new_digit.abs() % 10;
     }
 }
 
