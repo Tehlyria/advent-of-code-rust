@@ -33,7 +33,7 @@ const HALT: i64 = 99;
 
 impl IntCode {
     pub fn new(init_mem: &[i64]) -> Self {
-        let mut vec = vec![0; 0x1000];
+        let mut vec = vec![0; 0x1500];
         vec[..init_mem.len()].clone_from_slice(init_mem);
 
         Self {
