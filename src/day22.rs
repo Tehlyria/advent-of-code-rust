@@ -1,6 +1,9 @@
 use aoc_runner_derive::{aoc, aoc_generator};
 use itertools::Itertools;
+use num::bigint::ToBigInt;
+use num::{BigInt, One, Zero};
 use parse_display::{Display, FromStr};
+use std::ops::{Neg, Rem};
 
 #[derive(Display, FromStr, Copy, Clone, Debug)]
 pub enum Instruction {
@@ -58,9 +61,49 @@ pub fn part1(insts: &[Instruction]) -> Option<usize> {
     cards.iter().position(|it| *it == 2019)
 }
 
+fn mod_arith(to_find: BigInt, insts: &[Instruction]) -> BigInt {
+    // WTF?
+    let number_of_cards: BigInt = 119_315_717_514_047i64.to_bigint().unwrap();
+    let number_of_cards_sub_2: BigInt = 119_315_717_514_045i64.to_bigint().unwrap();
+    let shuffles: BigInt = 101_741_582_076_661i64.to_bigint().unwrap();
+
+    let mut memory = vec![BigInt::one(), BigInt::zero()];
+
+    for inst in insts.iter().rev() {
+        match inst {
+            Instruction::Cut(n) => {
+                memory[1] += n.to_bigint().unwrap();
+            }
+            Instruction::WithIncrement(n) => {
+                let res = n
+                    .to_bigint()
+                    .unwrap()
+                    .modpow(&number_of_cards_sub_2, &number_of_cards);
+                memory[0] *= res.clone();
+                memory[1] *= res;
+            }
+            Instruction::NewStack => {
+                memory[0] = memory[0].clone().neg();
+                memory[1] = (memory[1].clone() + BigInt::one()).neg();
+            }
+        };
+
+        memory[0] %= number_of_cards.clone();
+        memory[1] %= number_of_cards.clone();
+    }
+
+    let power = memory[0].modpow(&shuffles, &number_of_cards);
+    let a = power.clone() * to_find;
+    let b = (memory[1].clone() * (power + number_of_cards.clone() - 1))
+        * ((memory[0].clone() - BigInt::one()).modpow(&number_of_cards_sub_2, &number_of_cards));
+
+    let c: BigInt = a + b;
+    c.rem(&number_of_cards)
+}
+
 #[aoc(day22, part2)]
-pub fn part2(_: &[Instruction]) -> i64 {
-    todo!()
+pub fn part2(insts: &[Instruction]) -> BigInt {
+    mod_arith(2020.to_bigint().unwrap(), insts)
 }
 
 #[cfg(test)]
