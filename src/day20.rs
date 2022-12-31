@@ -66,7 +66,7 @@ pub fn generate(inp: &str) -> Option<MazeData> {
 }
 
 impl RecursionState {
-    pub fn new(row: usize, col: usize, depth: usize) -> Self {
+    pub const fn new(row: usize, col: usize, depth: usize) -> Self {
         Self {
             position: Position { row, col },
             depth,
@@ -74,7 +74,7 @@ impl RecursionState {
     }
 }
 
-fn is_outside_portal(pos: Position, height: usize, width: usize) -> bool {
+const fn is_outside_portal(pos: Position, height: usize, width: usize) -> bool {
     pos.col == 0 || pos.col == width - 1 || pos.row == 0 || pos.row == height - 1
 }
 

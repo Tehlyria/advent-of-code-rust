@@ -19,8 +19,8 @@ impl InputRange {
 }
 
 #[aoc_generator(day4)]
-pub fn generate(inp: &str) -> InputRange {
-    inp.parse().unwrap()
+pub fn generate(inp: &str) -> Option<InputRange> {
+    inp.parse().ok()
 }
 
 fn increasing(num: &[char]) -> bool {

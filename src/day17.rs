@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 #[aoc_generator(day17)]
 pub fn generate(inp: &str) -> Vec<i64> {
-    inp.split(',').map(|it| it.parse().unwrap()).collect()
+    inp.split(',').filter_map(|it| it.parse().ok()).collect()
 }
 
 fn generate_map(inp: &[i64]) -> Vec<Vec<char>> {

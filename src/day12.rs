@@ -24,15 +24,15 @@ pub struct Planet {
 }
 
 impl Planet {
-    pub fn new(pos: Vec3d, vel: Vec3d) -> Self {
+    pub const fn new(pos: Vec3d, vel: Vec3d) -> Self {
         Self { pos, vel }
     }
 
-    pub fn potential_energy(&self) -> i64 {
+    pub const fn potential_energy(&self) -> i64 {
         i64::abs(self.pos.0) + i64::abs(self.pos.1) + i64::abs(self.pos.2)
     }
 
-    pub fn kinetic_energy(&self) -> i64 {
+    pub const fn kinetic_energy(&self) -> i64 {
         i64::abs(self.vel.0) + i64::abs(self.vel.1) + i64::abs(self.vel.2)
     }
 }

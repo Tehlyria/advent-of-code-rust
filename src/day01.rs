@@ -5,7 +5,7 @@ pub fn generate(inp: &str) -> Vec<u64> {
     inp.lines().filter_map(|it| it.parse().ok()).collect()
 }
 
-fn calc_fuel(num: u64) -> u64 {
+const fn calc_fuel(num: u64) -> u64 {
     let div = num / 3;
     if div <= 2 {
         0
@@ -14,7 +14,7 @@ fn calc_fuel(num: u64) -> u64 {
     }
 }
 
-fn calc_fuel_p2(num: u64) -> u64 {
+const fn calc_fuel_p2(num: u64) -> u64 {
     let mut result = 0u64;
     let mut cur = num;
 

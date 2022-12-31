@@ -34,34 +34,32 @@ fn detection_count(p: &Position, v: &[Position]) -> i64 {
         .map(|it| calc_atan2(it, p))
         .collect::<Vec<f64>>();
 
-    ms.sort_by(|l, r| l.partial_cmp(r).unwrap());
+    ms.sort_by(|l, r| l.partial_cmp(r).unwrap_or(Ordering::Less));
     ms.dedup();
 
     ms.len() as i64
 }
 
-fn get_best_position(v: &[Position]) -> (&Position, i64) {
+fn get_best_position(v: &[Position]) -> Option<(&Position, i64)> {
     v.iter()
         .map(|it| (it, detection_count(it, v)))
         .max_by(|(_, lhs), (_, rhs)| lhs.cmp(rhs))
-        .unwrap()
 }
 
 #[aoc(day10, part1)]
-pub fn part1(v: &[Position]) -> i64 {
-    let (_, detection_count) = get_best_position(v);
+pub fn part1(v: &[Position]) -> Option<i64> {
+    let (_, detection_count) = get_best_position(v)?;
 
-    detection_count
+    Some(detection_count)
 }
 
 #[aoc(day10, part2)]
-pub fn part2(v: &[Position]) -> i64 {
-    let (p, _) = get_best_position(v);
+pub fn part2(v: &[Position]) -> Option<i64> {
+    let (p, _) = get_best_position(v)?;
 
     #[allow(clippy::cast_precision_loss)]
-    let dist = |lhs: &Position| -> f64 {
-        ((lhs.0 as f64 - p.0 as f64).powf(2.0) + (lhs.1 as f64 - p.1 as f64).powf(2.0)).sqrt()
-    };
+    let dist =
+        |lhs: &Position| -> f64 { (lhs.0 as f64 - p.0 as f64).hypot(lhs.1 as f64 - p.1 as f64) };
 
     let sort_pos =
         |lhs: &Position, rhs: &Position| -> Option<Ordering> { dist(lhs).partial_cmp(&dist(rhs)) };
@@ -71,15 +69,20 @@ pub fn part2(v: &[Position]) -> i64 {
             .filter(|it| (**it).ne(p))
             .fold(vec![], |mut acc, it| {
                 let angle = calc_atan2(it, p) + PI / 2.0;
-                let result = if angle < 0.0 { 2.0 * PI + angle } else { angle };
+                let result = if angle < 0.0 {
+                    2.0f64.mul_add(PI, angle)
+                } else {
+                    angle
+                };
 
                 if let Some(pos) = acc.iter().position(|(a, _)| (*a - result).abs() < 0.001) {
-                    let vec = &mut acc.get_mut(pos).unwrap().1;
-                    vec.push(it);
-                    vec.sort_by(|l, r| sort_pos(l, r).unwrap());
+                    if let Some((_, vec)) = &mut acc.get_mut(pos) {
+                        vec.push(it);
+                        vec.sort_by(|l, r| sort_pos(l, r).unwrap_or(Ordering::Less));
+                    }
                 } else {
                     acc.push((result, vec![it]));
-                    acc.sort_by(|(l, _), (r, _)| l.partial_cmp(r).unwrap());
+                    acc.sort_by(|(l, _), (r, _)| l.partial_cmp(r).unwrap_or(Ordering::Less));
                 }
 
                 acc
@@ -91,7 +94,7 @@ pub fn part2(v: &[Position]) -> i64 {
             if let Some(elem) = vec.pop() {
                 idx += 1;
                 if idx == 200 {
-                    return elem.0 * 100 + elem.1;
+                    return Some(elem.0 * 100 + elem.1);
                 }
             }
         }

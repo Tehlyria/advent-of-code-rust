@@ -3,10 +3,11 @@ use itertools::{iproduct, Itertools};
 use num::Integer;
 use std::collections::HashSet;
 
-fn is_bug(c: char) -> bool {
+const fn is_bug(c: char) -> bool {
     c == '#'
 }
-fn is_space(c: char) -> bool {
+
+const fn is_space(c: char) -> bool {
     c == '.'
 }
 

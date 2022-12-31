@@ -3,7 +3,7 @@ use aoc_runner_derive::{aoc, aoc_generator};
 
 #[aoc_generator(day15)]
 pub fn generate(inp: &str) -> Vec<i64> {
-    inp.split(',').map(|it| it.parse().unwrap()).collect()
+    inp.split(',').filter_map(|it| it.parse().ok()).collect()
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -42,13 +42,19 @@ fn successors(ds: &DroidState) -> Vec<(DroidState, usize)> {
     result
 }
 
-fn found_oxygen(ds: &DroidState) -> bool {
+const fn found_oxygen(ds: &DroidState) -> bool {
     ds.oxygen
 }
 
 fn find_oxygen(ds: &DroidState) -> Option<(DroidState, usize)> {
     let (states, cost) = pathfinding::prelude::dijkstra(ds, successors, found_oxygen)?;
-    Some((states.last().cloned().unwrap(), cost))
+    Some((
+        states
+            .last()
+            .cloned()
+            .expect("There should be at least 1 state"),
+        cost,
+    ))
 }
 
 #[aoc(day15, part1)]

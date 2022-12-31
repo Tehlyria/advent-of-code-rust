@@ -19,7 +19,7 @@ impl Add for MapPosition {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        MapPosition(self.0 + rhs.0, self.1 + rhs.1)
+        Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
 
@@ -32,7 +32,7 @@ impl AddAssign for MapPosition {
 
 #[aoc_generator(day11)]
 pub fn generate(inp: &str) -> Vec<i64> {
-    inp.split(',').map(|it| it.parse().unwrap()).collect()
+    inp.split(',').filter_map(|it| it.parse().ok()).collect()
 }
 
 fn run_robot(v: &[i64], c: Color) -> HashMap<MapPosition, Color> {
@@ -94,7 +94,7 @@ pub fn part1(v: &[i64]) -> i64 {
 }
 
 #[aoc(day11, part2)]
-pub fn part2(v: &[i64]) -> String {
+pub fn part2(v: &[i64]) -> Option<String> {
     let map = run_robot(v, Color::White);
 
     let mut out = map
@@ -114,15 +114,15 @@ pub fn part2(v: &[i64]) -> String {
         }
     });
 
-    let min_y = out.iter().min_by_key(|it| it.1).unwrap().1;
+    let min_y = out.iter().min_by_key(|it| it.1)?.1;
 
     let results = out
         .iter()
         .map(|it| it.add(MapPosition(0, i64::abs(min_y))))
         .collect_vec();
 
-    let max_x = results.iter().max_by_key(|it| it.0).unwrap().0;
-    let max_y = results.iter().max_by_key(|it| it.1).unwrap().1;
+    let max_x = results.iter().max_by_key(|it| it.0)?.0;
+    let max_y = results.iter().max_by_key(|it| it.1)?.1;
 
     assert!(results.iter().all(|it| it.1 >= 0));
 
@@ -138,5 +138,5 @@ pub fn part2(v: &[i64]) -> String {
         println!();
     }
 
-    String::from("FARBCFJK")
+    Some(String::from("FARBCFJK"))
 }

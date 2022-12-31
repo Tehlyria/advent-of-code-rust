@@ -8,7 +8,7 @@ pub fn generate(inp: &str) -> Vec<i64> {
 }
 
 #[aoc(day25, part1)]
-pub fn part1(inp: &[i64]) -> usize {
+pub fn part1(inp: &[i64]) -> Option<usize> {
     let mut vm = IntCode::new(inp);
 
     let mut cur_idx = 0;
@@ -23,11 +23,11 @@ pub fn part1(inp: &[i64]) -> usize {
                                     #
                                     |
       #-----------------------------#
-      |		                     |
+      |		                        |
      AIC-#		                    SLSB
       |
       J-----------------#
-      |		         |
+      |		            |
       #---@             A-#
       |   |             |
     #-# S-P-SH          KB-C6
@@ -39,13 +39,18 @@ pub fn part1(inp: &[i64]) -> usize {
         match vm.run() {
             State::Waiting => {
                 if cur_idx == 0 {
-                    input = stdin.lock().lines().next().unwrap().unwrap();
+                    input = stdin
+                        .lock()
+                        .lines()
+                        .next()
+                        .expect("There should be a line of input")
+                        .ok()?;
                     if !input.ends_with('\n') {
                         input.push('\n');
                     }
                 }
 
-                let next_char = input.chars().nth(cur_idx).unwrap();
+                let next_char = input.chars().nth(cur_idx)?;
                 vm.input(next_char as i64);
                 cur_idx += 1;
                 print!("{next_char}");
@@ -55,11 +60,11 @@ pub fn part1(inp: &[i64]) -> usize {
                 }
             }
             State::Write(n) => {
-                print!("{}", char::from_u32(n as u32).unwrap());
+                print!("{}", char::from_u32(n as u32)?);
             }
             State::Halted(_) => break,
         };
     }
 
-    2_105_377
+    Some(2_105_377)
 }

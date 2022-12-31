@@ -102,8 +102,7 @@ mod tests {
             let data = generate(inp);
 
             let res = part1(&data);
-            assert!(res.is_some());
-            assert_eq!(res.unwrap(), 159);
+            assert_eq!(res, Some(159));
         }
 
         {
@@ -112,8 +111,7 @@ mod tests {
             let data = generate(inp);
 
             let res = part1(&data);
-            assert!(res.is_some());
-            assert_eq!(res.unwrap(), 135);
+            assert_eq!(res, Some(135));
         }
     }
 
@@ -125,8 +123,7 @@ mod tests {
             let data = generate(inp);
 
             let res = part2(&data);
-            assert!(res.is_some());
-            assert_eq!(res.unwrap(), 610);
+            assert_eq!(res, Some(610));
         }
 
         {
@@ -135,8 +132,7 @@ mod tests {
             let data = generate(inp);
 
             let res = part2(&data);
-            assert!(res.is_some());
-            assert_eq!(res.unwrap(), 410);
+            assert_eq!(res, Some(410));
         }
     }
 }

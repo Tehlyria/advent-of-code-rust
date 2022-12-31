@@ -5,7 +5,7 @@ use crate::intcode::{IntCode, State};
 
 #[aoc_generator(day7)]
 pub fn generate(inp: &str) -> Vec<i64> {
-    inp.split(',').map(|it| it.parse().unwrap()).collect()
+    inp.split(',').filter_map(|it| it.parse().ok()).collect()
 }
 
 fn permutate(mut data: [i64; 5]) -> Vec<Vec<i64>> {

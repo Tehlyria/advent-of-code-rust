@@ -163,7 +163,7 @@ impl IntCode {
         }
     }
 
-    pub fn is_halted(&self) -> bool {
+    pub const fn is_halted(&self) -> bool {
         self.is_halted
     }
 }

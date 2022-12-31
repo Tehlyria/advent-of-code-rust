@@ -10,7 +10,7 @@ struct PlanetPair(String, String);
 #[aoc_generator(day6)]
 pub fn generate(inp: &str) -> HashMap<String, Vec<String>> {
     inp.lines()
-        .map(|it| it.parse::<PlanetPair>().unwrap())
+        .filter_map(|it| it.parse::<PlanetPair>().ok())
         .fold(HashMap::new(), |mut acc, it| {
             acc.entry(it.0).or_insert_with(Vec::new).push(it.1);
             acc

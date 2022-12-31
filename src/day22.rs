@@ -20,14 +20,14 @@ pub enum Instruction {
 impl Instruction {
     fn execute(&self, cards: &mut Vec<i64>) {
         match *self {
-            Instruction::Cut(n) => {
+            Self::Cut(n) => {
                 if n.is_positive() {
                     cards.rotate_left(n as usize);
                 } else {
                     cards.rotate_right(n.unsigned_abs() as usize);
                 }
             }
-            Instruction::WithIncrement(n) => {
+            Self::WithIncrement(n) => {
                 let mut new_vec = vec![-1; cards.len()];
                 for card_num in 0..cards.len() {
                     let next_idx = (card_num * n) % cards.len();
@@ -37,7 +37,7 @@ impl Instruction {
 
                 *cards = new_vec;
             }
-            Instruction::NewStack => {
+            Self::NewStack => {
                 cards.reverse();
             }
         };
@@ -61,23 +61,22 @@ pub fn part1(insts: &[Instruction]) -> Option<usize> {
     cards.iter().position(|it| *it == 2019)
 }
 
-fn mod_arith(to_find: BigInt, insts: &[Instruction]) -> BigInt {
+fn mod_arith(to_find: BigInt, insts: &[Instruction]) -> Option<BigInt> {
     // WTF?
-    let number_of_cards: BigInt = 119_315_717_514_047i64.to_bigint().unwrap();
-    let number_of_cards_sub_2: BigInt = 119_315_717_514_045i64.to_bigint().unwrap();
-    let shuffles: BigInt = 101_741_582_076_661i64.to_bigint().unwrap();
+    let number_of_cards: BigInt = 119_315_717_514_047i64.to_bigint()?;
+    let number_of_cards_sub_2: BigInt = 119_315_717_514_045i64.to_bigint()?;
+    let shuffles: BigInt = 101_741_582_076_661i64.to_bigint()?;
 
     let mut memory = vec![BigInt::one(), BigInt::zero()];
 
     for inst in insts.iter().rev() {
         match inst {
             Instruction::Cut(n) => {
-                memory[1] += n.to_bigint().unwrap();
+                memory[1] += n.to_bigint()?;
             }
             Instruction::WithIncrement(n) => {
                 let res = n
-                    .to_bigint()
-                    .unwrap()
+                    .to_bigint()?
                     .modpow(&number_of_cards_sub_2, &number_of_cards);
                 memory[0] *= res.clone();
                 memory[1] *= res;
@@ -98,12 +97,12 @@ fn mod_arith(to_find: BigInt, insts: &[Instruction]) -> BigInt {
         * ((memory[0].clone() - BigInt::one()).modpow(&number_of_cards_sub_2, &number_of_cards));
 
     let c: BigInt = a + b;
-    c.rem(&number_of_cards)
+    Some(c.rem(&number_of_cards))
 }
 
 #[aoc(day22, part2)]
-pub fn part2(insts: &[Instruction]) -> BigInt {
-    mod_arith(2020.to_bigint().unwrap(), insts)
+pub fn part2(insts: &[Instruction]) -> Option<BigInt> {
+    mod_arith(2020.to_bigint()?, insts)
 }
 
 #[cfg(test)]

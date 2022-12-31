@@ -24,15 +24,12 @@ pub fn part1(v: &[char]) -> Option<usize> {
         zl.cmp(&zr)
     });
 
-    match min {
-        Some(res) => {
-            let ones = count_char('1', res);
-            let twos = count_char('2', res);
+    min.map(|res| {
+        let ones = count_char('1', res);
+        let twos = count_char('2', res);
 
-            Some(ones * twos)
-        }
-        None => None,
-    }
+        ones * twos
+    })
 }
 
 #[aoc(day8, part2)]

@@ -50,9 +50,9 @@ fn count_ore_impl(
     amount: usize,
     recipes: &[Recipe],
     mats: &mut HashMap<String, usize>,
-) -> usize {
+) -> Option<usize> {
     if inp.eq("ORE") {
-        return amount;
+        return Some(amount);
     }
 
     let quant = mats.entry(inp.to_string()).or_insert(0);
@@ -74,10 +74,10 @@ fn count_ore_impl(
     };
 
     if need == 0 {
-        return 0;
+        return Some(0);
     }
 
-    let recipe = find_recipe(inp, recipes).unwrap();
+    let recipe = find_recipe(inp, recipes)?;
     let need_steps = (need as f64).div(recipe.output.0 as f64).ceil() as usize;
 
     let produces = recipe.output.0 * need_steps;
@@ -93,12 +93,12 @@ fn count_ore_impl(
         .sum()
 }
 
-fn count_ore(inp: &str, amount: usize, recipes: &[Recipe]) -> usize {
+fn count_ore(inp: &str, amount: usize, recipes: &[Recipe]) -> Option<usize> {
     count_ore_impl(inp, amount, recipes, &mut HashMap::new())
 }
 
 #[aoc(day14, part1)]
-pub fn part1(inp: &[Recipe]) -> usize {
+pub fn part1(inp: &[Recipe]) -> Option<usize> {
     count_ore("FUEL", 1, inp)
 }
 
@@ -133,7 +133,11 @@ impl BinSearchable for RangeInclusive<usize> {
 pub fn part2(inp: &[Recipe]) -> usize {
     const TRILLION: usize = 1_000_000_000_000;
 
-    (0..=TRILLION).binary_search_by(|it| count_ore("FUEL", it, inp).cmp(&TRILLION))
+    (0..=TRILLION).binary_search_by(|it| {
+        count_ore("FUEL", it, inp)
+            .unwrap_or_default()
+            .cmp(&TRILLION)
+    })
 }
 
 #[cfg(test)]
@@ -152,14 +156,14 @@ mod tests {
 
         let data = generate(inp);
 
-        assert_eq!(9, count_ore("A", 1, &data));
-        assert_eq!(8, count_ore("B", 1, &data));
-        assert_eq!(7, count_ore("C", 1, &data));
+        assert_eq!(Some(9), count_ore("A", 1, &data));
+        assert_eq!(Some(8), count_ore("B", 1, &data));
+        assert_eq!(Some(7), count_ore("C", 1, &data));
 
-        assert_eq!(2 * 9 + 2 * 8, count_ore("AB", 1, &data));
-        assert_eq!(2 * 8 + 2 * 7, count_ore("BC", 1, &data));
-        assert_eq!(7 + 9, count_ore("CA", 1, &data));
-        assert_eq!(165, count_ore("FUEL", 1, &data));
+        assert_eq!(Some(2 * 9 + 2 * 8), count_ore("AB", 1, &data));
+        assert_eq!(Some(2 * 8 + 2 * 7), count_ore("BC", 1, &data));
+        assert_eq!(Some(7 + 9), count_ore("CA", 1, &data));
+        assert_eq!(Some(165), count_ore("FUEL", 1, &data));
 
         let inp = "157 ORE => 5 NZVS\n\
                           165 ORE => 6 DCFZ\n\
@@ -172,7 +176,7 @@ mod tests {
                           3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT";
 
         let data = generate(inp);
-        assert_eq!(13312, count_ore("FUEL", 1, &data));
+        assert_eq!(Some(13312), count_ore("FUEL", 1, &data));
 
         let inp = "2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG\n\
                           17 NVRVD, 3 JNWZP => 8 VPVL\n\
@@ -188,7 +192,7 @@ mod tests {
                           176 ORE => 6 VJHF";
 
         let data = generate(inp);
-        assert_eq!(180_697, count_ore("FUEL", 1, &data));
+        assert_eq!(Some(180_697), count_ore("FUEL", 1, &data));
 
         let inp = "171 ORE => 8 CNZTR\n\
                           7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL\n\
@@ -209,7 +213,7 @@ mod tests {
                           5 BHXH, 4 VRPVC => 5 LTCX";
 
         let data = generate(inp);
-        assert_eq!(2_210_736, count_ore("FUEL", 1, &data));
+        assert_eq!(Some(2_210_736), count_ore("FUEL", 1, &data));
     }
 
     #[test]
