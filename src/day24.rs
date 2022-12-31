@@ -1,6 +1,7 @@
 use aoc_runner_derive::{aoc, aoc_generator};
 use itertools::{iproduct, Itertools};
 use num::Integer;
+use pathfinding::matrix::Matrix;
 use std::collections::HashSet;
 
 const fn is_bug(c: char) -> bool {
@@ -12,42 +13,25 @@ const fn is_space(c: char) -> bool {
 }
 
 #[aoc_generator(day24)]
-pub fn generate(inp: &str) -> Vec<Vec<char>> {
-    inp.lines().fold(vec![], |mut acc, it| {
-        acc.push(it.chars().collect_vec());
-        acc
-    })
+pub fn generate(inp: &str) -> Option<Matrix<char>> {
+    let rows = inp.lines().map(|it| it.chars().collect_vec()).collect_vec();
+    Matrix::from_rows(rows).ok()
 }
 
-fn count_adjacent_bugs(row: usize, col: usize, grid: &[Vec<char>]) -> usize {
-    let mut result = 0;
-
-    if row > 0 {
-        result += usize::from(is_bug(grid[row - 1][col]));
-    }
-    if row < grid.len() - 1 {
-        result += usize::from(is_bug(grid[row + 1][col]));
-    }
-
-    if col > 0 {
-        result += usize::from(is_bug(grid[row][col - 1]));
-    }
-
-    if col < grid[row].len() - 1 {
-        result += usize::from(is_bug(grid[row][col + 1]));
-    }
-
-    result
+fn count_adjacent_bugs(row: usize, col: usize, grid: &Matrix<char>) -> usize {
+    grid.neighbours((row, col), false)
+        .filter(|&(r, c)| is_bug(grid[(r, c)]))
+        .count()
 }
 
-fn calculate_biodiversity(grid: &[Vec<char>]) -> usize {
+fn calculate_biodiversity(grid: &Matrix<char>) -> usize {
     grid.iter()
         .enumerate()
         .flat_map(|(idx, row)| {
             if idx.is_even() {
-                row.clone()
+                row.to_vec()
             } else {
-                row.iter().rev().copied().collect()
+                row.iter().rev().copied().collect_vec()
             }
         })
         .zip(std::iter::successors(Some(1), |it| Some(it * 2)))
@@ -55,22 +39,22 @@ fn calculate_biodiversity(grid: &[Vec<char>]) -> usize {
 }
 
 #[aoc(day24, part1)]
-pub fn part1(grid: &[Vec<char>]) -> usize {
-    let mut current = grid.to_vec();
-    let mut next = vec![vec!['.'; current[0].len()]; current.len()];
+pub fn part1(grid: &Matrix<char>) -> usize {
+    let mut current = grid.clone();
+    let mut next = Matrix::new(current.rows, current.columns, '.');
 
     let mut seen = HashSet::new();
     seen.insert(current.clone());
 
     loop {
-        for (row, col) in iproduct!(0..current.len(), 0..current[0].len()) {
+        for (row, col) in iproduct!(0..current.rows, 0..current.columns) {
             let num_bugs = count_adjacent_bugs(row, col, &current);
-            if (num_bugs == 1 || num_bugs == 2) && is_space(current[row][col]) {
-                next[row][col] = '#';
-            } else if num_bugs != 1 && is_bug(current[row][col]) {
-                next[row][col] = '.';
+            if (num_bugs == 1 || num_bugs == 2) && is_space(current[(row, col)]) {
+                next[(row, col)] = '#';
+            } else if num_bugs != 1 && is_bug(current[(row, col)]) {
+                next[(row, col)] = '.';
             } else {
-                next[row][col] = current[row][col];
+                next[(row, col)] = current[(row, col)];
             }
         }
 
