@@ -1,5 +1,6 @@
 use crate::intcode::{IntCode, State};
 use aoc_runner_derive::{aoc, aoc_generator};
+use itertools::izip;
 
 #[aoc_generator(day15)]
 pub fn generate(inp: &str) -> Vec<i64> {
@@ -12,7 +13,7 @@ struct DroidState {
     oxygen: bool,
 }
 
-fn successors(ds: &DroidState) -> Vec<(DroidState, usize)> {
+fn successors(ds: &DroidState) -> Vec<DroidState> {
     let mut result = vec![];
 
     for direction in 1..=4 {
@@ -23,15 +24,10 @@ fn successors(ds: &DroidState) -> Vec<(DroidState, usize)> {
             if let State::Write(n) = vm.run() {
                 match n {
                     0 => { /* hit a wall */ }
-                    1 => {
+                    1 | 2 => {
                         // moved one step - new state
-                        let new_state = DroidState { vm, oxygen: false };
-                        result.push((new_state, 1));
-                    }
-                    2 => {
-                        // moved one step - new state
-                        let new_state = DroidState { vm, oxygen: true };
-                        result.push((new_state, 1));
+                        let new_state = DroidState { vm, oxygen: n == 2 };
+                        result.push(new_state);
                     }
                     _ => unreachable!("Unknown response code!"),
                 }
@@ -47,13 +43,13 @@ const fn found_oxygen(ds: &DroidState) -> bool {
 }
 
 fn find_oxygen(ds: &DroidState) -> Option<(DroidState, usize)> {
-    let (states, cost) = pathfinding::prelude::dijkstra(ds, successors, found_oxygen)?;
+    let states = pathfinding::prelude::bfs(ds, successors, found_oxygen)?;
     Some((
         states
             .last()
             .cloned()
             .expect("There should be at least 1 state"),
-        cost,
+        states.len() - 1,
     ))
 }
 
@@ -74,7 +70,8 @@ pub fn part2(inp: &[i64]) -> Option<usize> {
 
     let (ds, _) = find_oxygen(&ds)?;
 
-    let all_nodes = pathfinding::prelude::dijkstra_all(&ds, successors);
+    let all_nodes =
+        pathfinding::prelude::dijkstra_all(&ds, |it| izip!(successors(it), std::iter::repeat(1)));
 
     all_nodes
         .values()
