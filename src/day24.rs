@@ -41,71 +41,45 @@ fn count_adjacent_bugs_plutonian(
     if depth < grids.len() - 1 {
         let inner = &grids[depth + 1];
 
-        if tile_number == 7 {
-            result.push(inner[(0, 0)]);
-            result.push(inner[(0, 1)]);
-            result.push(inner[(0, 2)]);
-            result.push(inner[(0, 3)]);
-            result.push(inner[(0, 4)]);
-        } else if tile_number == 11 {
-            result.push(inner[(0, 0)]);
-            result.push(inner[(1, 0)]);
-            result.push(inner[(2, 0)]);
-            result.push(inner[(3, 0)]);
-            result.push(inner[(4, 0)]);
-        } else if tile_number == 13 {
-            result.push(inner[(0, 4)]);
-            result.push(inner[(1, 4)]);
-            result.push(inner[(2, 4)]);
-            result.push(inner[(3, 4)]);
-            result.push(inner[(4, 4)]);
-        } else if tile_number == 17 {
-            result.push(inner[(4, 0)]);
-            result.push(inner[(4, 1)]);
-            result.push(inner[(4, 2)]);
-            result.push(inner[(4, 3)]);
-            result.push(inner[(4, 4)]);
+        for i in 0..5 {
+            if tile_number == 7 {
+                result.push(inner[(0, i)]);
+            } else if tile_number == 11 {
+                result.push(inner[(i, 0)]);
+            } else if tile_number == 13 {
+                result.push(inner[(i, 4)]);
+            } else if tile_number == 17 {
+                result.push(inner[(4, i)]);
+            }
         }
     }
 
     if depth > 0 {
         let outer = &grids[depth - 1];
 
-        if tile_number == 0
-            || tile_number == 1
-            || tile_number == 2
-            || tile_number == 3
-            || tile_number == 4
-        {
-            result.push(outer[(1, 2)]);
-        }
-
-        if tile_number == 0
-            || tile_number == 5
-            || tile_number == 10
-            || tile_number == 15
-            || tile_number == 20
-        {
-            result.push(outer[(2, 1)]);
-        }
-
-        if tile_number == 4
-            || tile_number == 9
-            || tile_number == 14
-            || tile_number == 19
-            || tile_number == 24
-        {
-            result.push(outer[(2, 3)]);
-        }
-
-        if tile_number == 20
-            || tile_number == 21
-            || tile_number == 22
-            || tile_number == 23
-            || tile_number == 24
-        {
-            result.push(outer[(3, 2)]);
-        }
+        match tile_number {
+            0 => {
+                result.push(outer[(1, 2)]);
+                result.push(outer[(2, 1)]);
+            }
+            4 => {
+                result.push(outer[(1, 2)]);
+                result.push(outer[(2, 3)]);
+            }
+            20 => {
+                result.push(outer[(2, 1)]);
+                result.push(outer[(3, 2)]);
+            }
+            24 => {
+                result.push(outer[(2, 3)]);
+                result.push(outer[(3, 2)]);
+            }
+            1 | 2 | 3 => result.push(outer[(1, 2)]),
+            5 | 10 | 15 => result.push(outer[(2, 1)]),
+            9 | 14 | 19 => result.push(outer[(2, 3)]),
+            21 | 22 | 23 => result.push(outer[(3, 2)]),
+            _ => {}
+        };
     }
 
     result.iter().filter(|&&it| is_bug(it)).count()
