@@ -17,7 +17,7 @@ fn successors(ds: &DroidState) -> Vec<(DroidState, usize)> {
 
     for direction in 1..=4 {
         let mut vm = ds.vm.clone();
-        if let State::Waiting = vm.run() {
+        if vm.run() == State::Waiting {
             vm.input(direction);
 
             if let State::Write(n) = vm.run() {

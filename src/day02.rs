@@ -31,7 +31,7 @@ pub fn part2(v: &[i64]) -> i64 {
 
         let mut vm = IntCode::new(&inp);
 
-        if let State::Halted(19_690_720) = vm.run() {
+        if vm.run() == State::Halted(19_690_720) {
             return first * 100 + second;
         }
     }

@@ -15,12 +15,12 @@ pub fn part1(inp: &[i64]) -> i64 {
         let mut vm = IntCode::new(inp);
 
         // X
-        if let State::Waiting = vm.run() {
+        if vm.run() == State::Waiting {
             vm.input(x);
         }
 
         // Y
-        if let State::Waiting = vm.run() {
+        if vm.run() == State::Waiting {
             vm.input(y);
         }
 
@@ -69,12 +69,12 @@ pub fn part2(inp: &[i64]) -> usize {
         let mut vm = IntCode::new(inp);
 
         // X
-        if let State::Waiting = vm.run() {
+        if vm.run() == State::Waiting {
             vm.input(x as i64);
         }
 
         // Y
-        if let State::Waiting = vm.run() {
+        if vm.run() == State::Waiting {
             vm.input(y as i64);
         }
 
