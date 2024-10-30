@@ -88,9 +88,9 @@ fn run_robot(v: &[i64], c: Color) -> HashMap<MapPosition, Color> {
 }
 
 #[aoc(day11, part1)]
-pub fn part1(v: &[i64]) -> i64 {
+pub fn part1(v: &[i64]) -> usize {
     let map = run_robot(v, Color::Black);
-    map.len() as i64
+    map.len()
 }
 
 #[aoc(day11, part2)]

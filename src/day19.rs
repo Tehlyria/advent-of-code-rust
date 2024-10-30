@@ -70,11 +70,13 @@ pub fn part2(inp: &[i64]) -> usize {
 
         // X
         if vm.run() == State::Waiting {
+            #[allow(clippy::cast_possible_wrap)]
             vm.input(x as i64);
         }
 
         // Y
         if vm.run() == State::Waiting {
+            #[allow(clippy::cast_possible_wrap)]
             vm.input(y as i64);
         }
 

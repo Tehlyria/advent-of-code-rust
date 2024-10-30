@@ -67,7 +67,7 @@ fn mod_arith(to_find: BigInt, insts: &[Instruction]) -> Option<BigInt> {
     let number_of_cards_sub_2: BigInt = 119_315_717_514_045i64.to_bigint()?;
     let shuffles: BigInt = 101_741_582_076_661i64.to_bigint()?;
 
-    let mut memory = vec![BigInt::one(), BigInt::zero()];
+    let mut memory = [BigInt::one(), BigInt::zero()];
 
     for inst in insts.iter().rev() {
         match inst {

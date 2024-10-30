@@ -74,6 +74,7 @@ pub fn part1(wires: &[Vec<Position>; 2]) -> Option<i64> {
 #[aoc(day3, part2)]
 pub fn part2(wires: &[Vec<Position>; 2]) -> Option<i64> {
     fn pos(v: &[Position], e: &Position) -> Option<i64> {
+        #[allow(clippy::cast_possible_wrap)]
         v.iter().position(|it| *it == *e).map(|it| it as i64 + 1)
     }
 

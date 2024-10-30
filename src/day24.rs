@@ -74,10 +74,10 @@ fn count_adjacent_bugs_plutonian(
                 result.push(outer[(2, 3)]);
                 result.push(outer[(3, 2)]);
             }
-            1 | 2 | 3 => result.push(outer[(1, 2)]),
+            1..=3 => result.push(outer[(1, 2)]),
             5 | 10 | 15 => result.push(outer[(2, 1)]),
             9 | 14 | 19 => result.push(outer[(2, 3)]),
-            21 | 22 | 23 => result.push(outer[(3, 2)]),
+            21..=23 => result.push(outer[(3, 2)]),
             _ => {}
         };
     }

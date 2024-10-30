@@ -196,7 +196,7 @@ pub fn part2(grid: &Matrix<char>) -> Option<usize> {
                 saved_states[it.idx] = it.clone();
 
                 let mut next_state = saved_states[next_idx].clone();
-                next_state.keys = it.keys.clone();
+                next_state.keys.clone_from(&it.keys);
                 next_state.cost = it.cost;
 
                 result.push(((next_state, saved_states.clone()), 0));

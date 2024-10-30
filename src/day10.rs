@@ -12,7 +12,10 @@ pub fn generate(inp: &str) -> Vec<Position> {
         .fold(Vec::new(), |acc, (cur_line, l)| {
             l.chars().enumerate().fold(acc, |mut acc, (cur_char, c)| {
                 match c {
-                    '#' => acc.push(Position(cur_char as i64, cur_line as i64)),
+                    '#' => {
+                        #[allow(clippy::cast_possible_wrap)]
+                        acc.push(Position(cur_char as i64, cur_line as i64));
+                    }
                     '.' => {}
                     _ => unreachable!("Invalid input {}", c),
                 }
@@ -27,7 +30,7 @@ fn calc_atan2(lhs: &Position, rhs: &Position) -> f64 {
     (lhs.1 as f64 - rhs.1 as f64).atan2(lhs.0 as f64 - rhs.0 as f64)
 }
 
-fn detection_count(p: &Position, v: &[Position]) -> i64 {
+fn detection_count(p: &Position, v: &[Position]) -> usize {
     let mut ms = v
         .iter()
         .filter(|it| (**it).ne(p))
@@ -37,17 +40,17 @@ fn detection_count(p: &Position, v: &[Position]) -> i64 {
     ms.sort_by(|l, r| l.partial_cmp(r).unwrap_or(Ordering::Less));
     ms.dedup();
 
-    ms.len() as i64
+    ms.len()
 }
 
-fn get_best_position(v: &[Position]) -> Option<(&Position, i64)> {
+fn get_best_position(v: &[Position]) -> Option<(&Position, usize)> {
     v.iter()
         .map(|it| (it, detection_count(it, v)))
         .max_by(|(_, lhs), (_, rhs)| lhs.cmp(rhs))
 }
 
 #[aoc(day10, part1)]
-pub fn part1(v: &[Position]) -> Option<i64> {
+pub fn part1(v: &[Position]) -> Option<usize> {
     let (_, detection_count) = get_best_position(v)?;
 
     Some(detection_count)

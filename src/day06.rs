@@ -12,7 +12,7 @@ pub fn generate(inp: &str) -> HashMap<String, Vec<String>> {
     inp.lines()
         .filter_map(|it| it.parse::<PlanetPair>().ok())
         .fold(HashMap::new(), |mut acc, it| {
-            acc.entry(it.0).or_insert_with(Vec::new).push(it.1);
+            acc.entry(it.0).or_default().push(it.1);
             acc
         })
 }
